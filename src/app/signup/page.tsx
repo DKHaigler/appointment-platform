@@ -16,7 +16,7 @@ export default function SignupPage() {
         return;
       }
 
-      const data = await signUp(email, password);
+      const data = await signUp(email, password, fullName);
 
       console.log(data);
     }

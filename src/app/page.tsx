@@ -1,16 +1,5 @@
-"use client";
-
-import { signUp } from "@/features/auth/services/signup";
-
 export default function Home() {
-  async function handleSignUp() {
-    const data = await signUp(
-      "kelsey@haigler.dev",
-      "YourTestPassword123!"
-    );
 
-    console.log(data);
-  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6">
