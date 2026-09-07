@@ -23,8 +23,8 @@ export default function Home() {
       </p>
 
       <div className="flex justify-center gap-5 p-6">
-        <a href="/signup" className="rounded-lg bg-black px-6 py-3 text-white font-medium transition-all duration-300 ease-in-out hover:bg-gray-800">Create Account</a>
-        <a href="/login" className="rounded-lg border border-gray-300 px-6 py-3 font-medium transition-all duration-300 ease-in-out hover:bg-gray-100 hover:text-black">Log In</a>
+        <a href="/signup" className="btn-primary">Create Account</a>
+        <a href="/login" className="btn-secondary">Log In</a>
       </div>
       </div>
     </main>
