@@ -9,16 +9,50 @@ export default function SignupPage() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
       event.preventDefault();
+
+      setError("");
+      
       if (password !== confirmPassword) {
-        console.log("Passwords do not match");
-        return;
-      }
+        setError("Passwords do not match");
+          return;
+        }
+        
+      setLoading(true);
+      try {
+          const data = await signUp(email, password, fullName);
+          setSuccess(true);
+         
+        } catch (error) {
+            if(error instanceof Error){
+                setError(error.message);
+            } else {
+                setError("Something went wrong. Please try again.")
+            }
+        } finally {
+          setLoading(false);
+     }
 
-      const data = await signUp(email, password, fullName);
+    }
 
-      console.log(data);
+    if (success) {
+      return (
+        <main className="min-h-screen flex items-center justify-center p-6">
+          <div className="w-full max-w-md text-center space-y-4">
+            <h1 className="text-3xl font-bold">Check your email</h1>
+    
+            <p className="text-gray-600">
+              We sent a confirmation link to {email}. Please verify your email to
+              finish creating your account.
+            </p>
+          </div>
+        </main>
+      );
     }
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
@@ -72,9 +106,12 @@ export default function SignupPage() {
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   />
               </div>
-
-              <button type="submit" className="btn-primary" >
-                Create Account
+              
+              {error && (
+                <p>{error}</p>
+              )}
+              <button type="submit" className="btn-primary" disabled={loading}>
+                {loading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
         </div>
