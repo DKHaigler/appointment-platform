@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signUp } from "@/features/auth/services/signup";
 
 
@@ -12,6 +12,7 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
       event.preventDefault();
@@ -45,7 +46,7 @@ export default function SignupPage() {
         <main className="min-h-screen flex items-center justify-center p-6">
           <div className="w-full max-w-md text-center space-y-4">
             <h1 className="text-3xl font-bold">Check your email</h1>
-    
+
             <p className="text-gray-600">
               We sent a confirmation link to {email}. Please verify your email to
               finish creating your account.
