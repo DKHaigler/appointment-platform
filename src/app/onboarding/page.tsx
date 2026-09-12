@@ -10,14 +10,39 @@ export default function OnboardingPage() {
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
       event.preventDefault();
+      setError("");
 
       if (!user) {
         return;
       }
 
-      await createBusiness(name, slug, user.id);
+      setLoading(true);
+
+      try {
+          await createBusiness(name, slug, user.id);
+          setSuccess(true);
+        }catch (error) {
+            if (error instanceof Error) {
+              setError(error.message);
+            }
+        }finally {
+            setLoading(false);
+        }
+    }
+
+    if (success) {
+      return (
+        <main>
+          <h1>Business Created</h1>
+          <p>Your business has been created successfully.</p>
+        </main>
+      );
     }
 
     return(
@@ -41,9 +66,9 @@ export default function OnboardingPage() {
             value={slug}
             onChange={(event) => setSlug(event.target.value)}
             />
-
-          <button type="submit">
-            Create Business
+            {error && <p>{error}</p>}
+          <button type="submit" disabled={loading}>
+            {loading ? "Creating Business..." : "Create Business"}
           </button>
         </form>
 
