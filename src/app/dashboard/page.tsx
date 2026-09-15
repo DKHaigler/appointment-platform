@@ -1,20 +1,18 @@
 "use client";
-import { useState, useEffect } from "react";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBusinesses } from "@/features/business/hooks/useBusinesses";
 
+import { useBusiness } from "@/features/business/context/BusinessContext";
+
+import Link from "next/link";
+
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const { businesses, loading } = useBusinesses(user?.id ?? null);
+  
+  const { activeBusinessId, setActiveBusinessId } = useBusiness();
 
-  const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (businesses.length > 0 && !activeBusinessId) {
-      setActiveBusinessId(businesses[0].id);
-    }
-  }, [businesses, activeBusinessId]);
 
 
   return (
@@ -30,6 +28,7 @@ export default function DashboardPage() {
         </button>
       ))}
       <p>Active business: {activeBusinessId}</p>
+      <Link href="/services">Manage Services</Link>
     </main>
   );
 }
