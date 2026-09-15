@@ -28,7 +28,12 @@ export default function DashboardPage() {
         </button>
       ))}
       <p>Active business: {activeBusinessId}</p>
-      <Link href="/services">Manage Services</Link>
+      <Link href="/services">
+        Manage Services
+      </Link>
+      <Link href="/availability">
+        Manage Availability
+      </Link>
     </main>
   );
 }
