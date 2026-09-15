@@ -14,6 +14,7 @@ export function useBusinesses(userId: string | null) {
         const data = await getBusinesses(userId);
 
         setBusinesses(data);
+
         setLoading(false);
       }
 
