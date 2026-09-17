@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { getAvailabilityForDay } from "@/features/availability/services/getAvailabilityForDay";
 import { generateTimeSlots } from "@/features/availability/utils/generateTimeSlots";
-import { createAppointment } from "@/features/appointments/services/createAppointments"; 
+import { createAppointment } from "@/features/appointments/services/createAppointments";
+import { getAppointmentsForDay } from "@/features/appointments/services/getAppointmentsForDay"; 
 
 type BookingFormProps = {
   businessId: string;
@@ -18,6 +19,8 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   async function handleDateChange(date: string) {
     setSelectedDate(date);
@@ -57,11 +60,52 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       selectedService.duration_minutes
     );
   
-    setTimeSlots(slots);
+    const startOfDay = `${date}T00:00:00`;
+    const endOfDay = `${date}T23:59:59`;
+  
+    const appointments = await getAppointmentsForDay(
+      businessId,
+      new Date(startOfDay).toISOString(),
+      new Date(endOfDay).toISOString()
+    );
+  
+    const availableSlots = slots.filter((slot) => {
+      const slotStart = new Date(
+        `${date}T${slot}:00`
+      );
+  
+      const slotEnd = new Date(slotStart);
+  
+      slotEnd.setMinutes(
+        slotEnd.getMinutes() + selectedService.duration_minutes
+      );
+  
+      return !appointments.some((appointment) => {
+        const appointmentStart = new Date(
+          appointment.start_time
+        );
+  
+        const appointmentEnd = new Date(
+          appointment.end_time
+        );
+  
+        return (
+          slotStart < appointmentEnd &&
+          slotEnd > appointmentStart
+        );
+      });
+    });
+  
+    setTimeSlots(availableSlots);
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
+  
+    setError("");
+    setSuccess(false);
   
     if (
       !selectedServiceId ||
@@ -78,26 +122,65 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
     );
   
     if (!selectedService) return;
+  
     const startDateTime = new Date(
       `${selectedDate}T${selectedTime}:00`
     );
-
+  
     const endDateTime = new Date(startDateTime);
-
+  
     endDateTime.setMinutes(
-      endDateTime.getMinutes() + selectedService.duration_minutes
+      endDateTime.getMinutes() +
+        selectedService.duration_minutes
     );
   
-    await createAppointment({
-      businessId,
-      serviceId: selectedServiceId,
-      clientName,
-      clientEmail,
-      clientPhone,
-      startTime: startDateTime.toISOString(),
-      endTime: endDateTime.toISOString(),
-    });
+    try {
+      await createAppointment({
+        businessId,
+        serviceId: selectedServiceId,
+        clientName,
+        clientEmail,
+        clientPhone,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+      });
+  
+      setSuccess(true);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      );
+    }
   }
+
+  if (success) {
+      return (
+        <section>
+          <h2>Appointment booked!</h2>
+    
+          <p>
+            Your appointment has been scheduled successfully.
+          </p>
+    
+          <p>
+            We&apos;ll see you on{" "}
+            {new Date(
+              `${selectedDate}T${selectedTime}:00`
+            ).toLocaleDateString()}{" "}
+            at{" "}
+            {new Date(
+              `${selectedDate}T${selectedTime}:00`
+            ).toLocaleTimeString([], {
+              hour: "numeric",
+              minute: "2-digit",
+            })}
+            .
+          </p>
+        </section>
+      );
+    }
 
   return (
     <section>
