@@ -1,5 +1,6 @@
 import { getBusinessBySlug } from "@/features/business/services/getBusinessBySlug";
 import { getServices } from "@/features/services/services/getServices";
+import BookingForm from "@/features/booking/component/BookingForm"; 
 
 type BookingPageProps = {
   params: Promise<{
@@ -14,6 +15,8 @@ export default async function BookingPage({
 
   const business = await getBusinessBySlug(slug);
   const services = await getServices(business.id);
+  
+  
 
   return (
     <main>
@@ -35,6 +38,7 @@ export default async function BookingPage({
             </div>
           ))
         )}
+        <BookingForm businessId={business.id} services={services}/>
       </section>
     </main>
   );
