@@ -11,6 +11,7 @@ type BookingFormProps = {
   services: any[];
 };
 
+
 export default function BookingForm({ businessId, services }: BookingFormProps) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
@@ -20,7 +21,10 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
   const [clientEmail, setClientEmail] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [error, setError] = useState("");
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const today = new Date().toISOString().split("T")[0];
 
   async function handleDateChange(date: string) {
     setSelectedDate(date);
@@ -36,6 +40,15 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
     setSelectedTime("");
   
     if (!date || !serviceId) return;
+    
+    setLoadingSlots(true);
+
+    try {
+      // existing updateTimeSlots code goes here
+    } finally {
+      setLoadingSlots(false);
+    }
+
   
     const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
   
@@ -59,6 +72,9 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       availability.end_time.slice(0, 5),
       selectedService.duration_minutes
     );
+
+    console.log("Selected service:", selectedService);
+    console.log("Generated slots:", slots);
   
     const startOfDay = `${date}T00:00:00`;
     const endOfDay = `${date}T23:59:59`;
@@ -73,7 +89,11 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       const slotStart = new Date(
         `${date}T${slot}:00`
       );
-  
+
+      if (slotStart <= new Date()) {
+        return false;
+      }
+
       const slotEnd = new Date(slotStart);
   
       slotEnd.setMinutes(
@@ -97,15 +117,19 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
     });
   
     setTimeSlots(availableSlots);
+    setLoadingSlots(false);
   }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+
+    if (submitting) return
   
     setError("");
     setSuccess(false);
+    setSubmitting(true)
   
     if (
       !selectedServiceId ||
@@ -114,6 +138,7 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       !clientName ||
       !clientEmail
     ) {
+      setError("Please complete all required fields.");
       return;
     }
   
@@ -148,10 +173,15 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       setSuccess(true);
     } catch (error) {
       setError(
-        error instanceof Error
+        error instanceof Error &&
+          error.message.includes("appointments_no_overlap")
+          ? "That time was just booked. Please choose another available time."
+          : error instanceof Error
           ? error.message
           : "Something went wrong. Please try again."
       );
+    
+      setSubmitting(false);
     }
   }
 
@@ -184,13 +214,15 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
 
   return (
     <section>
+      {error && <p className="form-error">{error}</p>}
       <h2>Book an appointment</h2>
 
-      <label htmlFor="date">Select a date</label>
-      <label htmlFor="service">Select a service</label>
+      <label htmlFor="date" className="booking-label" >Select a date</label>
+      <label htmlFor="service" className="booking-label" >Select a service</label>
 
       <select
         id="service"
+        className="booking-input" 
         value={selectedServiceId}
         onChange={(event) => {
           const serviceId = event.target.value;
@@ -211,15 +243,21 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
       <input
         id="date"
         type="date"
+        className="booking-input" 
+        min={today}
         value={selectedDate}
         onChange={(event) => handleDateChange(event.target.value)}
       />
-      {timeSlots.length > 0 && (
+      {loadingSlots && <p>Loading available times...</p>}
+      {!loadingSlots && timeSlots.length > 0 && (
       <div>
         <h3>Available times</h3>
 
         {timeSlots.map((slot) => (
           <button
+            className={`booking-time ${
+            selectedTime === slot ? "booking-time-selected" : ""
+          }`}
             key={slot}
             type="button"
             onClick={() => setSelectedTime(slot)}
@@ -229,38 +267,49 @@ export default function BookingForm({ businessId, services }: BookingFormProps) 
         ))}
       </div>
     )}
+    {!loadingSlots &&
+      selectedDate &&
+      selectedServiceId &&
+      timeSlots.length === 0 && (
+        <p>No available times for this date.</p>
+    )}
    {selectedTime && (
   <form onSubmit={handleSubmit}>
     <h3>Your information</h3>
 
-    <label htmlFor="client-name">Name</label>
+    <label htmlFor="client-name" className="booking-label" >Name</label>
     <input
       id="client-name"
       type="text"
+      className="booking-input"
       value={clientName}
       onChange={(event) => setClientName(event.target.value)}
       required
     />
 
-    <label htmlFor="client-email">Email</label>
+    <label htmlFor="client-email" className="booking-label" >Email</label>
     <input
       id="client-email"
       type="email"
+      className="booking-input" 
       value={clientEmail}
       onChange={(event) => setClientEmail(event.target.value)}
       required
     />
 
-    <label htmlFor="client-phone">Phone</label>
+    <label htmlFor="client-phone" className="booking-label" >Phone</label>
     <input
       id="client-phone"
       type="tel"
+      className="booking-input" 
       value={clientPhone}
       onChange={(event) => setClientPhone(event.target.value)}
     />
 
-    <button type="submit">
-      Book Appointment
+    <button
+     
+    type="submit" disabled={submitting}>
+      {submitting ? "Booking..." : "Book Appointment"}
     </button>
   </form>
 )}

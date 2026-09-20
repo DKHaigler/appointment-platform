@@ -1,78 +1,143 @@
 "use client";
 
 import { useState } from "react";
-import { createBusiness } from "@/features/auth/services/createBusiness";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { createBusiness } from "@/features/auth/services/createBusiness"; 
 
 export default function OnboardingPage() {
-    const { user } = useAuth();
+  const { user } = useAuth();
 
-    const [name, setName] = useState("");
-    const [slug, setSlug] = useState("");
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-      event.preventDefault();
-      setError("");
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-      if (!user) {
-        return;
+    if (!user) return;
+
+    setError("");
+    setLoading(true);
+
+    try {
+      await createBusiness(name, slug, user.id);
+
+      setSuccess(true);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong. Please try again.");
       }
-
-      setLoading(true);
-
-      try {
-          await createBusiness(name, slug, user.id);
-          setSuccess(true);
-        }catch (error) {
-            if (error instanceof Error) {
-              setError(error.message);
-            }
-        }finally {
-            setLoading(false);
-        }
+    } finally {
+      setLoading(false);
     }
+  }
 
-    if (success) {
-      return (
-        <main>
-          <h1>Business Created</h1>
-          <p>Your business has been created successfully.</p>
-        </main>
-      );
-    }
+  if (success) {
+    return (
+      <main className="auth-page">
+        <div className="auth-card auth-success">
+          <h1>Business created</h1>
 
-    return(
-        <>
-        <p>{user ? `Logged in as ${user.email}` : "Not logged in"}</p>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="name">Business Name</label>
+          <p>
+            Your business has been created successfully.
+          </p>
 
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              window.location.href = "/dashboard";
+            }}
+          >
+            Go to dashboard
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="auth-page">
+      <div className="auth-card">
+        <header className="auth-header">
+          <h1>Set up your business</h1>
+
+          <p>
+            Let&apos;s get your business set up so you can
+            start accepting appointments.
+          </p>
+        </header>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label
+              htmlFor="business-name"
+              className="form-label"
+            >
+              Business Name
+            </label>
+
+            <input
+              id="business-name"
+              className="form-input"
+              type="text"
+              value={name}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
+              placeholder="Your Business Name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label
+              htmlFor="business-slug"
+              className="form-label"
+            >
+              Booking URL
+            </label>
+
+            <input
+              id="business-slug"
+              className="form-input"
+              type="text"
+              value={slug}
+              onChange={(event) =>
+                setSlug(event.target.value)
+              }
+              placeholder="Your-Business"
+              required
             />
 
-          <label htmlFor="slug">Business URL</label>
+            <p className="form-help">
+              Your customers will use this to book
+              appointments with you.
+            </p>
+          </div>
 
-          <input
-            id="slug"
-            type="text"
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-            />
-            {error && <p>{error}</p>}
-          <button type="submit" disabled={loading}>
-            {loading ? "Creating Business..." : "Create Business"}
+          {error && (
+            <p className="form-error">{error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={loading}
+          >
+            {loading
+              ? "Creating Business..."
+              : "Create Business"}
           </button>
         </form>
-
-        </>
-    )
-
+      </div>
+    </main>
+  );
 }

@@ -7,6 +7,11 @@ export async function upsertAvailability(
   endTime: string,
   isAvailable: boolean
 ) {
+
+  if (startTime >= endTime) {
+    throw new Error("End time must be after start time.");
+  }
+
   const { data, error } = await supabase
     .from("availability")
     .upsert(
